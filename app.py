@@ -4,8 +4,7 @@ import os
 import json
 import sqlite3
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+from huggingface_hub import InferenceClient
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
@@ -15,11 +14,11 @@ app = Flask(__name__, static_folder='static', static_url_path='')
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
 CORS(app, supports_credentials=True)
 
-API_KEY = os.getenv("GEMINI_API_KEY")
-if not API_KEY or API_KEY == "your_gemini_api_key_here":
-    print("WARNING: GEMINI_API_KEY is not configured.")
+API_KEY = os.getenv("HUGGINGFACE_API_TOKEN")
+if not API_KEY or API_KEY == "your_api_key_here":
+    print("WARNING: HUGGINGFACE_API_TOKEN is not configured in .env.")
 
-client = genai.Client()
+client = InferenceClient(api_key=API_KEY)
 
 DB_PATH = os.path.join(os.path.dirname(__file__), 'database.db')
 
@@ -369,19 +368,33 @@ def analyze_code():
     try:
         prompt = generate_prompt(mode, language, code, error_message, expected_output)
 
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
-            )
+        messages = [
+            {"role": "system", "content": "You are a backend JSON API. You must ONLY output raw JSON. Do NOT wrap it in ```json blocks or provide markdown."},
+            {"role": "user", "content": prompt}
+        ]
+
+        response = client.chat_completion(
+            model="Qwen/Qwen2.5-Coder-32B-Instruct",
+            messages=messages,
+            max_tokens=2048,
+            temperature=0.1
         )
 
-        parsed_data = json.loads(response.text)
+        raw_text = response.choices[0].message.content.strip()
+        
+        # Clean up markdown if the model stubbornly adds it
+        if raw_text.startswith("```json"):
+            raw_text = raw_text.replace("```json\n", "", 1)
+        if raw_text.startswith("```"):
+            raw_text = raw_text.replace("```\n", "", 1)
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3].strip()
+
+        parsed_data = json.loads(raw_text)
         return jsonify({"result": parsed_data})
 
     except Exception as e:
-        return jsonify({"error": f"Failed to analyze with Gemini: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to analyze with Hugging Face: {str(e)}"}), 500
 
 # ─────────────────────────────────────────────
 # BOOTSTRAP
