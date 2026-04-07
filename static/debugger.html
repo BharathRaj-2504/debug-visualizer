@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Debugger and Visualizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        
+        <header class="top-navbar">
+            <div class="nav-brand">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #0e639c"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+                <h2>Code Debugger and Visualizer</h2>
+            </div>
+            
+            <div class="nav-controls">
+                <div class="mode-toggle" id="mode-toggle">
+                    <button class="mode-btn" data-mode="DEBUGGER">🐞 Debugger</button>
+                    <button class="mode-btn active" data-mode="VISUALIZER">👁️ Visualizer</button>
+                </div>
+
+                <select id="language-select" class="nav-select">
+                    <option value="Python">Python</option>
+                    <option value="C">C</option>
+                    <option value="C++">C++</option>
+                    <option value="Java">Java</option>
+                </select>
+
+                <button id="analyze-btn" class="primary-btn">
+                    <span class="btn-text">Trace Execution</span>
+                    <span class="loader hidden"></span>
+                </button>
+
+                <div id="user-info-slot"></div>
+            </div>
+        </header>
+
+        <div id="debugger-inputs" class="secondary-bar" style="display: none;">
+            <input type="text" id="error-message" placeholder="Error Context (eg. Exception trace)" />
+            <input type="text" id="expected-output" placeholder="Expected behavior" />
+        </div>
+
+        <main class="split-view">
+            <!-- Left Pane: IDE -->
+            <div class="editor-pane">
+                <div id="editor-container"></div>
+            </div>
+
+            <!-- Right Pane: Interactive Player -->
+            <div class="output-pane">
+                <div id="empty-state" class="center-content">
+                    <p style="color: #666">Click <strong>Trace Execution</strong> to generate an interactive timeline.</p>
+                </div>
+
+                <div id="player-container" class="hidden">
+                    
+                    <!-- Top Logic Error Banner (Debugger Only) -->
+                    <div id="error-banner" class="alert-box hidden">
+                        <h4 id="error-title">Runtime Error</h4>
+                        <p id="error-desc">Description</p>
+                        
+                        <div class="analysis-container">
+                            <h5 style="color: #c9d1d9; margin-top: 12px; margin-bottom: 6px;">Analysis:</h5>
+                            <ul id="error-analysis-list" style="margin-left: 20px; font-size: 13px; margin-bottom: 16px; color: #a1a1aa;"></ul>
+                        </div>
+
+                        <div class="fixed-code-container hidden">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <h5>Suggested Fix:</h5>
+                                <button id="apply-fix-btn" class="primary-btn" style="padding: 4px 10px; background-color: var(--accent-green); font-size: 11px;">Apply Fix</button>
+                            </div>
+                            <pre><code id="fixed-code-block"></code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Visualizer Controls -->
+                    <div id="player-controls" class="player-controls">
+                        <div class="progress-bar-container">
+                            <div id="progress-fill" class="progress-fill"></div>
+                        </div>
+                        <div class="btn-group">
+                            <button id="btn-first" title="First Step">⏪</button>
+                            <button id="btn-prev" title="Previous Step">◀</button>
+                            <span id="step-counter" class="step-badge">0 / 0</span>
+                            <button id="btn-next" title="Next Step">▶</button>
+                            <button id="btn-last" title="Last Step">⏩</button>
+                        </div>
+                    </div>
+
+                    <!-- Step Context Header -->
+                    <div id="step-card" class="step-card">
+                        <div class="step-header">
+                            <span id="step-action" class="action-badge">Action</span>
+                            <h3 id="step-title">Line Execution</h3>
+                        </div>
+                        <p id="step-desc" class="step-desc">Detailed explanation of the step goes here.</p>
+                    </div>
+
+                    <!-- Memory Map Table -->
+                    <div id="variables-card" class="memory-card">
+                        <div class="card-title">Memory & Variables</div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Variable</th>
+                                    <th>Value</th>
+                                    <th>Change</th>
+                                </tr>
+                            </thead>
+                            <tbody id="variables-tbody">
+                                <!-- JS Populated -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="final-output-card" class="memory-card hidden" style="margin-top:20px; border-color: #0e639c;">
+                        <div class="card-title text-accent">Final Standard Output</div>
+                        <pre id="final-output-text" style="padding:10px; margin:0; background:transparent"></pre>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ace.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 # Secrets
 .env
+database.db
 
 # Virtual Environments
 .venv

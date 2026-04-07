@@ -65,8 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('empty-state').innerHTML = '<p style="color: #666">Contacting GenAI execution engine... 🚀</p>';
         document.getElementById('empty-state').classList.remove('hidden');
 
+        // Track analytics
+        try { fetch('/api/track', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: globalMode }) }); } catch(e) {}
+
         try {
-            const response = await fetch('http://127.0.0.1:5000/analyze', {
+            const response = await fetch('/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -300,4 +303,24 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-prev').addEventListener('click', () => { if(currentStepIndex > 0) currentStepIndex--; renderStep(); });
     document.getElementById('btn-next').addEventListener('click', () => { if(currentStepIndex < stepsData.length - 1) currentStepIndex++; renderStep(); });
     document.getElementById('btn-last').addEventListener('click', () => { currentStepIndex = stepsData.length - 1; renderStep(); });
+
+    // Load user session info into navbar
+    (async () => {
+        try {
+            const res = await fetch('/api/me');
+            const data = await res.json();
+            const userSlot = document.getElementById('user-info-slot');
+            if (userSlot && data.logged_in !== false && data.username) {
+                userSlot.innerHTML = `
+                    <div class="user-info">
+                        <span>👤 <strong>${data.username}</strong></span>
+                        <button class="logout-btn" id="debugger-logout-btn">Logout</button>
+                    </div>`;
+                document.getElementById('debugger-logout-btn').addEventListener('click', async () => {
+                    await fetch('/api/logout', { method: 'POST' });
+                    window.location.href = '/';
+                });
+            }
+        } catch(e) {}
+    })();
 });
