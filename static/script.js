@@ -30,17 +30,25 @@ document.addEventListener('DOMContentLoaded', () => {
         editor.session.setMode(`ace/mode/${langMap[e.target.value]}`);
     });
 
-    const modeSelect = document.getElementById('mode-select');
+    let globalMode = 'VISUALIZER';
     const debuggerInputs = document.getElementById('debugger-inputs');
 
     const analyzeBtn = document.getElementById('analyze-btn');
     const btnText = analyzeBtn.querySelector('.btn-text');
     const loader = analyzeBtn.querySelector('.loader');
-    
-    modeSelect.addEventListener('change', () => {
-        debuggerInputs.style.display = modeSelect.value === 'DEBUGGER' ? 'flex' : 'none';
-        btnText.textContent = modeSelect.value === 'DEBUGGER' ? 'Debug' : 'Trace Execution';
-        resetPlayerUI();
+
+    const modeButtons = document.querySelectorAll('.mode-btn');
+    modeButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            modeButtons.forEach(b => b.classList.remove('active'));
+            const targetBtn = e.currentTarget;
+            targetBtn.classList.add('active');
+            
+            globalMode = targetBtn.dataset.mode;
+            debuggerInputs.style.display = globalMode === 'DEBUGGER' ? 'flex' : 'none';
+            btnText.textContent = globalMode === 'DEBUGGER' ? 'Debug' : 'Trace Execution';
+            resetPlayerUI();
+        });
     });
 
     analyzeBtn.addEventListener('click', async () => {
@@ -64,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({
                     code: code,
                     language: document.getElementById('language-select').value,
-                    mode: modeSelect.value,
+                    mode: globalMode,
                     error_message: document.getElementById('error-message').value,
                     expected_output: document.getElementById('expected-output').value
                 })
@@ -82,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('empty-state').innerHTML = `<div class="alert-box"><h4>Failure</h4><p>${error.message}</p></div>`;
         } finally {
             analyzeBtn.disabled = false;
-            btnText.textContent = modeSelect.value === 'DEBUGGER' ? 'Debug' : 'Trace Execution';
+            btnText.textContent = globalMode === 'DEBUGGER' ? 'Debug' : 'Trace Execution';
             loader.classList.add('hidden');
         }
     });
@@ -94,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         stepsData = [];
         currentStepIndex = 0;
         clearHighlights();
+        if (editor) editor.session.clearAnnotations();
     }
 
     function initializePlayer(payload) {
@@ -109,8 +118,33 @@ document.addEventListener('DOMContentLoaded', () => {
             errorBanner.classList.remove('hidden');
             
             if (payload.error) {
-                document.getElementById('error-title').textContent = `${payload.error.type || 'Execution'} Error (Line ${payload.error.line})`;
+                const errLineNum = parseInt(payload.error.line) || 1;
+                document.getElementById('error-title').textContent = `${payload.error.type || 'Execution'} Error (Line ${errLineNum})`;
                 document.getElementById('error-desc').textContent = payload.error.message;
+
+                // Add gutter badge
+                editor.session.setAnnotations([{
+                    row: errLineNum - 1, 
+                    column: 0, 
+                    text: payload.error.message, 
+                    type: "error"
+                }]);
+
+                // Token highlighting
+                if (payload.error.token) {
+                    const lineText = editor.session.getLine(errLineNum - 1) || "";
+                    const startCol = lineText.indexOf(payload.error.token);
+                    
+                    if (startCol !== -1) {
+                        clearHighlights();
+                        currentMarker = editor.session.addMarker(
+                            new Range(errLineNum - 1, startCol, errLineNum - 1, startCol + payload.error.token.length),
+                            "ace_error-token", 
+                            "text"
+                        );
+                        editor.scrollToLine(errLineNum - 1, true, true, function () {});
+                    }
+                }
             } else {
                 document.getElementById('error-title').textContent = "Debugger Analysis";
                 document.getElementById('error-desc').textContent = "Review the findings below.";
@@ -134,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (payload.fixed_code) {
                 document.querySelector('.fixed-code-container').classList.remove('hidden');
                 document.getElementById('fixed-code-block').textContent = payload.fixed_code;
+                window.currentFixedCode = payload.fixed_code;
             }
         } else {
             errorBanner.classList.add('hidden');
@@ -253,7 +288,14 @@ document.addEventListener('DOMContentLoaded', () => {
         editor.scrollToLine(lineIndex, true, true, function () {});
     }
 
-    // Register Player Listeners
+    // Register Controls
+    document.getElementById('apply-fix-btn').addEventListener('click', () => {
+        if (window.currentFixedCode) {
+            editor.setValue(window.currentFixedCode, -1);
+            resetPlayerUI();
+        }
+    });
+
     document.getElementById('btn-first').addEventListener('click', () => { currentStepIndex = 0; renderStep(); });
     document.getElementById('btn-prev').addEventListener('click', () => { if(currentStepIndex > 0) currentStepIndex--; renderStep(); });
     document.getElementById('btn-next').addEventListener('click', () => { if(currentStepIndex < stepsData.length - 1) currentStepIndex++; renderStep(); });

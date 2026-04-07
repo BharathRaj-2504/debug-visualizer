@@ -45,6 +45,12 @@ body, html { height: 100%; font-family: var(--font-ui); background-color: var(--
 .output-pane { background-color: var(--bg-darker); overflow-y: auto; position: relative; padding: 24px; }
 .center-content { height: 100%; display: flex; align-items: center; justify-content: center; }
 
+/* MODE TOGGLE */
+.mode-toggle { display: flex; background: #1a1a1a; border-radius: 6px; padding: 4px; border: 1px solid var(--border-color); }
+.mode-btn { background: transparent; border: none; padding: 6px 12px; font-size: 13px; color: #888; font-family: var(--font-ui); cursor: pointer; border-radius: 4px; transition: 0.2s; font-weight: 500;}
+.mode-btn:hover { color: #ccc; }
+.mode-btn.active { background: #333; color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
 /* PLAYER & TIMELINE UI */
 .player-controls { background: var(--bg-navbar); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 .progress-bar-container { height: 4px; background: #333; border-radius: 2px; margin-bottom: 12px; overflow: hidden; }
@@ -84,3 +90,4 @@ body, html { height: 100%; font-family: var(--font-ui); background-color: var(--
 
 /* ACE EDITOR LINE INJECTION */
 .ace_active-line { background-color: var(--highlight-bg) !important; position: absolute; width: 100% !important; left: 0 !important; z-index: 10; border-left: 3px solid var(--accent-green) !important; }
+.ace_error-token { position: absolute; border-bottom: 2px dashed var(--accent-red) !important; background: rgba(248, 81, 73, 0.2); z-index: 20; border-radius: 2px; }

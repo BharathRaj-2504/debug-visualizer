@@ -17,10 +17,10 @@
             </div>
             
             <div class="nav-controls">
-                <select id="mode-select" class="nav-select">
-                    <option value="VISUALIZER">Visualizer</option>
-                    <option value="DEBUGGER">Debugger</option>
-                </select>
+                <div class="mode-toggle" id="mode-toggle">
+                    <button class="mode-btn" data-mode="DEBUGGER">🐞 Debugger</button>
+                    <button class="mode-btn active" data-mode="VISUALIZER">👁️ Visualizer</button>
+                </div>
 
                 <select id="language-select" class="nav-select">
                     <option value="Python">Python</option>
@@ -66,7 +66,10 @@
                         </div>
 
                         <div class="fixed-code-container hidden">
-                            <h5>Suggested Fix:</h5>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <h5>Suggested Fix:</h5>
+                                <button id="apply-fix-btn" class="primary-btn" style="padding: 4px 10px; background-color: var(--accent-green); font-size: 11px;">Apply Fix</button>
+                            </div>
                             <pre><code id="fixed-code-block"></code></pre>
                         </div>
                     </div>

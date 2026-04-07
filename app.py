@@ -78,6 +78,7 @@ YOU MUST DO THESE FIRST:
 2. ALWAYS fill "error" field if ANY issue exists:
    {{
      "line": "(number here)",
+     "token": "the exact string snippet causing the error",
      "type": "Syntax/Runtime/Logic",
      "message": "short description"
    }}
